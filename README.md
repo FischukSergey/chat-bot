@@ -39,6 +39,9 @@ task ingest -- load "data/incoming/БДР для индексации.xlsx"
 `VECTOR_SIZE` — длина массива `POST /v1/embeddings`, не скрытая размерность чата.
 Смена embedding-модели = пересоздать коллекции и переиндексировать.
 
+MCP: `task mcp` — HTTP `:7345` (`/health`, `POST /tools/{name}`).
+stdio: `task mcp -- --stdio`.
+
 Excel класть в `data/incoming/`. Маппинг колонок — `data/mappings/`
 ([как читать YAML](data/mappings/README.md)). Боевые `.xlsx` и `.env` в git не входят.
 

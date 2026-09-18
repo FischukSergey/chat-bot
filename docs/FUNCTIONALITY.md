@@ -92,6 +92,8 @@
 ## MCP-инструменты
 
 Это весь функционал, который видит LLM. Имена стабильные, поля — JSON Schema.
+Контракт Sprint 3 (вход/выход, `Source`, деньги): [api-sprint-3.md](api-sprint-3.md).
+Сейчас в коде три tools; `get_contract` / `list_obligations` — целевые, не реализуем.
 
 ### `search_records`
 
@@ -100,12 +102,14 @@
 Вход:
 
 - `query` (string) — текст запроса;
-- `collections` (array) — `budget_items` / `contracts` / `obligations`, по умолчанию все;
+- `collections` (array) — сейчас только `budget_items` (по умолчанию она же);
+  `contracts` / `obligations` — ошибка валидации, пока нет коллекций;
 - `filters` — опционально:
-  - `contract_number`, `inn`, `counterparty`, `status`, `budget_article`, `year`;
-  - `expense_kind` (`production` / `management`), `match_key`;
-  - `date_from`, `date_to` (по `signed_at` / `accepted_at`);
-  - `amount_min`, `amount_max`;
+  - бюджет: `year`, `expense_kind` (`production` / `management`), `match_key`,
+    `article_code`, `article_name`, `ancestor_code`;
+  - `amount_min`, `amount_max` (по `limit_amount`);
+  - целевые (позже): `contract_number`, `inn`, `counterparty`, `status`,
+    `budget_article`, `date_from` / `date_to`;
 - `limit` — 1…20, по умолчанию 8.
 
 Выход: список хитов `{ collection, score, fields, source }`.

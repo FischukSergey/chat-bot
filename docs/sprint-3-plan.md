@@ -2,7 +2,10 @@
 
 Источник: `docs/PLAN.md` этап 3, `docs/FUNCTIONALITY.md` (контракт tools), `docs/sprint-2-plan.md`.
 
+**Статус:** закрыт 2026-09-19. Чек-лист: `docs/sprint-3-checklist.md`.
+
 **Scope:** только бюджет. Tools договоров и обязательств не пишем.
+Контракт Sprint 3: `docs/api-sprint-3.md` (утверждён в пункте 1 чек-листа).
 
 ## 1) Цель спринта
 
