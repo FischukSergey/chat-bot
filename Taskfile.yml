@@ -89,7 +89,7 @@ tasks:
       - "{{.PYTHON}} -m assistant {{.CLI_ARGS}}"
 
   mcp:
-    desc: "Заготовка mcp_server: task mcp"
+    desc: "mcp_server: task mcp | task mcp -- --stdio"
     dir: mcp_server
     cmds:
       - go run . {{.CLI_ARGS}}
