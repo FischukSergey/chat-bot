@@ -1,0 +1,24 @@
+qdrant:
+  url: ${QDRANT_URL:-http://127.0.0.1:6333}
+  collections:
+    budget_items: budget_items
+    contracts: contracts
+    obligations: obligations
+
+lm_studio:
+  embeddings_url: ${EMBEDDINGS_URL:-http://127.0.0.1:1234/v1}
+  llm_url: ${LLM_URL:-http://127.0.0.1:1234/v1}
+  embeddings_model: ${EMBEDDINGS_MODEL:-}
+  llm_model: ${LLM_MODEL:-}
+  # Заполнить, когда в LM Studio выбрана embedding-модель.
+  vector_size: ${VECTOR_SIZE:-0}
+
+search:
+  limit_min: 1
+  limit_max: 20
+  limit_default: 8
+  # Черновик; подкрутим на живом индексе.
+  score_threshold: 0.4
+
+ingest:
+  remain_free_epsilon: 0.01

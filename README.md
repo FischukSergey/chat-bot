@@ -5,6 +5,39 @@
 
 Стек: **Python** (ingest, эмбеддинги, RAG), **Go** (MCP-сервер и API), **Qdrant**.
 
+Запуск и отладка — через [Taskfile](https://taskfile.dev). Не вызывать сырой `docker compose`, если есть `task local:*`.
+
+```bash
+cp .env.example .env   # имена моделей и VECTOR_SIZE — после настройки LM Studio
+task --list            # все команды
+task local:up          # Qdrant, дождаться healthy
+task local:ps
+task local:logs
+task local:down        # остановить, volume оставить
+task lint              # golangci-lint в Docker — тот же вызов, что CI
+task                   # fmt + lint + test + build
+```
+
+## Локальный контур
+
+**Qdrant** — единственный сервис compose на Sprint 1.
+
+```bash
+task local:up
+curl -sf http://127.0.0.1:6333/readyz   # должно ответить ok / 200
+# UI: http://127.0.0.1:6333/dashboard
+```
+
+Коллекции ingest создаст в Sprint 2. Сейчас пустой healthy Qdrant — норма.
+
+**LM Studio** (на хосте, не в Docker): сервер `http://127.0.0.1:1234/v1`.
+Нужны две модели: чат (`LLM_MODEL`) и отдельная embedding (`EMBEDDINGS_MODEL`).
+`VECTOR_SIZE` — длина массива `POST /v1/embeddings`, не скрытая размерность чата.
+Смена embedding-модели = пересоздать коллекции и переиндексировать.
+
+Excel класть в `data/incoming/`. Маппинг колонок — `data/mappings/`
+([как читать YAML](data/mappings/README.md)). Боевые `.xlsx` и `.env` в git не входят.
+
 ## Документы
 
 | Документ | Содержание |
