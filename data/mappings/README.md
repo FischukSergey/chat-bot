@@ -16,8 +16,8 @@ Ingest (Sprint 2) читает эти файлы и не угадывает ко
 | Файл | Коллекция | Статус |
 |---|---|---|
 | [budget.yaml](budget.yaml) | `budget_items` | канон v1, файл `БДР для индексации.xlsx` |
-| `contracts.yaml` | `contracts` | нет, ждём выгрузку |
-| `obligations.yaml` | `obligations` | нет, ждём выгрузку |
+| `contracts.yaml` | `contracts` | не пишем: договоры вне текущего scope |
+| `obligations.yaml` | `obligations` | не пишем: обязательства вне текущего scope |
 
 ## Как читать YAML
 

@@ -2,9 +2,12 @@
 
 Источник: `docs/sprint-3-plan.md`.
 
+**Scope:** только бюджет. `get_contract` / `list_obligations` не реализуем,
+пока нет выгрузок. DoD — `search_records` и `budget_summary` по смете.
+
 ## 1) Подготовка и контракты
 
-- [ ] Индекс Sprint 2 доступен (три коллекции с данными).
+- [ ] Индекс Sprint 2 доступен (`budget_items`, 172 точки на живой смете).
 - [ ] Утвердить JSON Schema всех пяти tools (как в `FUNCTIONALITY.md`).
 - [ ] Зафиксировать формат `source` и денежных полей.
 - [ ] Зафиксировать правило: `remain_free` в summary не пересчитывать.

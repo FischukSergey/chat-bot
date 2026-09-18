@@ -20,7 +20,7 @@ task                   # fmt + lint + test + build
 
 ## Локальный контур
 
-**Qdrant** — единственный сервис compose на Sprint 1.
+**Qdrant** — единственный сервис compose на этом этапе. UI: http://127.0.0.1:6333/dashboard.
 
 ```bash
 task local:up
@@ -28,7 +28,11 @@ curl -sf http://127.0.0.1:6333/readyz   # должно ответить ok / 200
 # UI: http://127.0.0.1:6333/dashboard
 ```
 
-Коллекции ingest создаст в Sprint 2. Сейчас пустой healthy Qdrant — норма.
+Коллекцию `budget_items` создаёт ingest при первом `load`:
+
+```bash
+task ingest -- load "data/incoming/БДР для индексации.xlsx"
+```
 
 **LM Studio** (на хосте, не в Docker): сервер `http://127.0.0.1:1234/v1`.
 Нужны две модели: чат (`LLM_MODEL`) и отдельная embedding (`EMBEDDINGS_MODEL`).
