@@ -7,7 +7,8 @@ vars:
   DOCKER_COMPOSE_CMD: "docker compose"
   COMPOSE_PROJECT_NAME: chat-bot
   LOCAL_COMPOSE_FILE: "deploy/docker-compose.yml"
-  PYTHON: python3
+  PYTHON:
+    sh: test -x .venv/bin/python3 && echo .venv/bin/python3 || echo python3
   GOLANGCI_LINT_VERSION: v2.12.2
   GOLANGCI_LINT_CACHE:
     sh: echo "$HOME/Library/Caches/golangci-lint"
@@ -78,7 +79,7 @@ tasks:
       - cd mcp_server && go build -o ../bin/mcp_server .
 
   ingest:
-    desc: "Заготовка ingest: task ingest [-- load <file>]"
+    desc: "ingest: task ingest -- load <file> | delete-source <file>"
     cmds:
       - "{{.PYTHON}} -m ingest {{.CLI_ARGS}}"
 
