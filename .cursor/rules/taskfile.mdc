@@ -1,0 +1,19 @@
+---
+description: Запуск, линт и локальный стек только через Taskfile
+alwaysApply: true
+---
+
+# Taskfile
+
+Локальный стек, линт, тесты и сборка — только через `task ...`.
+Список команд: `task --list`. Файл: `Taskfile.yml`.
+
+- Стек: проект `chat-bot` (`task local:up` / `down` / `ps` / `logs`).
+- Линт Go: только `task lint` (golangci-lint в Docker, тот же вызов, что CI).
+  Не запускать `go vet`, локальный бинарник golangci-lint или `lint:docker`.
+- Качество: `task` (default) или `task fmt`, `lint`, `test`, `build`.
+- Заготовки: `task ingest`, `task assistant`, `task mcp`.
+- Compose-файл: `deploy/docker-compose.yml`. Писать `docker compose` (не `docker-compose`).
+- Сырой `docker compose` не вызывать, если есть эквивалент `task local:*`.
+- Python в командной строке — `python3` / `pip3`.
+- Прод/SSH-таски не добавлять без явного запроса.

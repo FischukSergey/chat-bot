@@ -4,9 +4,14 @@ venv/
 __pycache__/
 *.py[cod]
 .DS_Store
-.cursor/
+bin/
 .vscode/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 
-data/incoming/
-data/rejects/
+data/incoming/*
+!data/incoming/.gitkeep
+data/rejects/*
+!data/rejects/.gitkeep
 *.xlsx

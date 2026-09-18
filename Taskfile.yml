@@ -1,0 +1,134 @@
+# https://taskfile.dev
+version: "3"
+
+silent: true
+
+vars:
+  DOCKER_COMPOSE_CMD: "docker compose"
+  COMPOSE_PROJECT_NAME: chat-bot
+  LOCAL_COMPOSE_FILE: "deploy/docker-compose.yml"
+  PYTHON: python3
+  GOLANGCI_LINT_VERSION: v2.12.2
+  GOLANGCI_LINT_CACHE:
+    sh: echo "$HOME/Library/Caches/golangci-lint"
+  COMPOSE: "{{.DOCKER_COMPOSE_CMD}} -p {{.COMPOSE_PROJECT_NAME}} -f {{.LOCAL_COMPOSE_FILE}}"
+
+tasks:
+  default:
+    desc: Качество — fmt, lint, test, build
+    cmds:
+      - task: fmt
+      - task: lint
+      - task: test
+      - task: build
+
+  tidy:
+    desc: go mod tidy в mcp_server
+    dir: mcp_server
+    cmds:
+      - go mod tidy
+
+  fmt:
+    desc: Форматировать Go и проверить синтаксис Python
+    cmds:
+      - task: fmt:go
+      - task: fmt:py
+
+  fmt:go:
+    desc: gofmt для mcp_server
+    dir: mcp_server
+    cmds:
+      - gofmt -w .
+
+  fmt:py:
+    desc: Проверка синтаксиса Python-пакетов
+    cmds:
+      - "{{.PYTHON}} -m compileall -q ingest assistant"
+
+  lint:
+    desc: golangci-lint в Docker (тот же вызов, что CI)
+    dir: mcp_server
+    cmds:
+      - mkdir -p {{.GOLANGCI_LINT_CACHE}}
+      - |
+        GOMODCACHE="$(go env GOMODCACHE)" && \
+        docker run --rm \
+          -v "$(pwd):/app" -w /app \
+          -v "{{.GOLANGCI_LINT_CACHE}}:/root/.cache" \
+          -v "${GOMODCACHE}:/root/go/pkg/mod:ro" \
+          golangci/golangci-lint:{{.GOLANGCI_LINT_VERSION}} \
+          golangci-lint run -v --timeout=5m ./...
+
+  test:
+    desc: Тесты Go и синтаксис Python
+    cmds:
+      - task: test:go
+      - task: fmt:py
+
+  test:go:
+    desc: go test в mcp_server
+    dir: mcp_server
+    cmds:
+      - go test -count=1 ./...
+
+  build:
+    desc: Собрать mcp_server в bin/
+    cmds:
+      - mkdir -p bin
+      - cd mcp_server && go build -o ../bin/mcp_server .
+
+  ingest:
+    desc: "Заготовка ingest: task ingest [-- load <file>]"
+    cmds:
+      - "{{.PYTHON}} -m ingest {{.CLI_ARGS}}"
+
+  assistant:
+    desc: "Заготовка assistant: task assistant"
+    cmds:
+      - "{{.PYTHON}} -m assistant {{.CLI_ARGS}}"
+
+  mcp:
+    desc: "Заготовка mcp_server: task mcp"
+    dir: mcp_server
+    cmds:
+      - go run . {{.CLI_ARGS}}
+
+  local:up:
+    desc: Поднять локальный стек (Qdrant) и дождаться healthy
+    cmds:
+      - "{{.COMPOSE}} up -d --wait"
+
+  local:down:
+    desc: Остановить стек, volume оставить
+    cmds:
+      - "{{.COMPOSE}} down"
+
+  local:down:clean:
+    desc: Остановить стек и удалить volume
+    cmds:
+      - "{{.COMPOSE}} down -v --remove-orphans"
+
+  local:build:
+    desc: Собрать образы без запуска
+    cmds:
+      - "{{.COMPOSE}} build"
+
+  local:restart:
+    desc: "Перезапуск: task local:restart [-- <service>]"
+    cmds:
+      - "{{.COMPOSE}} up -d --wait {{.CLI_ARGS}}"
+
+  local:ps:
+    desc: Статус контейнеров
+    cmds:
+      - "{{.COMPOSE}} ps"
+
+  local:logs:
+    desc: Логи всего стека
+    cmds:
+      - "{{.COMPOSE}} logs -f"
+
+  local:logs:service:
+    desc: "Логи сервиса: task local:logs:service -- qdrant"
+    cmds:
+      - "{{.COMPOSE}} logs -f {{.CLI_ARGS}}"
