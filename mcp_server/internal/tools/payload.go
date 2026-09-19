@@ -4,9 +4,13 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/FischukSergey/chat-bot/mcp_server/internal/qdrant"
 )
+
+const minNameContainsRunes = 6
 
 func payloadString(p map[string]any, key, fallback string) string {
 	if p == nil {
@@ -155,6 +159,7 @@ func pickFields(p map[string]any) map[string]any {
 		"article_level", "ancestor_codes",
 		"l1_code", "l1_name", "l2_code", "l2_name", "l3_code", "l3_name",
 		"l4_code", "l4_name", "l5_code", "l5_name",
+		"ancestor_names",
 		"limit_amount", "fact_amount", "obligation_amount",
 		"remain_free", "remain_free_source", "remain_unexecuted",
 		"amount_unit", "currency",
@@ -169,15 +174,57 @@ func pickFields(p map[string]any) map[string]any {
 }
 
 func pathHasName(p map[string]any, want string) bool {
-	if want == "" {
+	needle := normalizeName(want)
+	if needle == "" {
 		return true
 	}
-	for _, k := range []string{"article_name", "l1_name", "l2_name", "l3_name", "l4_name", "l5_name"} {
-		if payloadString(p, k, "") == want {
+	for _, raw := range pathNameValues(p) {
+		if nameMatches(raw, needle) {
 			return true
 		}
 	}
 	return false
+}
+
+func pathNameValues(p map[string]any) []string {
+	out := make([]string, 0, 8)
+	for _, k := range []string{"article_name", "l1_name", "l2_name", "l3_name", "l4_name", "l5_name"} {
+		if v := payloadString(p, k, ""); v != "" {
+			out = append(out, v)
+		}
+	}
+	switch xs := p["ancestor_names"].(type) {
+	case []string:
+		out = append(out, xs...)
+	case []any:
+		for _, x := range xs {
+			if s, ok := x.(string); ok && s != "" {
+				out = append(out, s)
+			}
+		}
+	}
+	return out
+}
+
+func nameMatches(hay, needle string) bool {
+	h := normalizeName(hay)
+	if h == "" {
+		return false
+	}
+	if h == needle {
+		return true
+	}
+	return utf8.RuneCountInString(needle) >= minNameContainsRunes && strings.Contains(h, needle)
+}
+
+func normalizeName(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, "ё", "е")
+	fields := strings.FieldsFunc(s, func(r rune) bool {
+		return unicode.IsSpace(r)
+	})
+	s = strings.Join(fields, " ")
+	return strings.TrimRight(s, " .,;:")
 }
 
 func hitFromPoint(collection string, p qdrant.Point, withScore bool) Hit {
