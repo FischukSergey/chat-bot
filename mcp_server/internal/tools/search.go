@@ -51,17 +51,31 @@ func (h *Handler) searchRecords(ctx context.Context, raw json.RawMessage) (Searc
 	if err != nil {
 		return SearchResult{}, err
 	}
+	name := ""
+	if in.Filters != nil {
+		name = deref(in.Filters.ArticleName)
+	}
 	query := ""
 	if in.Query != nil {
 		query = strings.TrimSpace(*in.Query)
 	}
 	if query == "" {
-		res, err := h.qd.Scroll(ctx, h.cfg.Collection, qdrant.ScrollRequest{Filter: qf, Limit: limit})
-		if err != nil {
-			return SearchResult{}, err
+		var points []qdrant.Point
+		if name != "" {
+			all, err := h.qd.ScrollAll(ctx, h.cfg.Collection, qf, 128)
+			if err != nil {
+				return SearchResult{}, err
+			}
+			points = takePoints(filterPointsByName(all, name), limit)
+		} else {
+			res, err := h.qd.Scroll(ctx, h.cfg.Collection, qdrant.ScrollRequest{Filter: qf, Limit: limit})
+			if err != nil {
+				return SearchResult{}, err
+			}
+			points = res.Points
 		}
-		hits := make([]Hit, 0, len(res.Points))
-		for _, p := range res.Points {
+		hits := make([]Hit, 0, len(points))
+		for _, p := range points {
 			hits = append(hits, hitFromPoint(h.cfg.Collection, p, false))
 		}
 		return SearchResult{Hits: hits}, nil
@@ -73,15 +87,20 @@ func (h *Handler) searchRecords(ctx context.Context, raw json.RawMessage) (Searc
 	if len(vecs) != 1 {
 		return SearchResult{}, validationError("embeddings не вернули вектор")
 	}
+	searchLimit := limit
+	if name != "" {
+		searchLimit = max(limit, h.cfg.LimitMax)
+	}
 	found, err := h.qd.Search(ctx, h.cfg.Collection, qdrant.SearchRequest{
 		Vector:         vecs[0],
 		Filter:         qf,
-		Limit:          limit,
+		Limit:          searchLimit,
 		ScoreThreshold: h.cfg.ScoreThreshold,
 	})
 	if err != nil {
 		return SearchResult{}, err
 	}
+	found = takePoints(filterPointsByName(found, name), limit)
 	hits := make([]Hit, 0, len(found))
 	for _, p := range found {
 		hits = append(hits, hitFromPoint(h.cfg.Collection, p, true))
@@ -97,16 +116,36 @@ func (f *filterIn) qdrantFilter() (*qdrant.Filter, error) {
 	if err != nil {
 		return nil, err
 	}
+	// article_name — не exact в Qdrant: родитель есть только у листьев в l1…l5.
 	return qdrant.BuildFilter(qdrant.BudgetFilter{
 		Year:         f.Year,
 		ExpenseKind:  kind,
 		ArticleCode:  deref(f.ArticleCode),
-		ArticleName:  deref(f.ArticleName),
 		MatchKey:     deref(f.MatchKey),
 		AncestorCode: deref(f.AncestorCode),
 		AmountMin:    f.AmountMin,
 		AmountMax:    f.AmountMax,
 	}), nil
+}
+
+func filterPointsByName(points []qdrant.Point, name string) []qdrant.Point {
+	if name == "" {
+		return points
+	}
+	out := make([]qdrant.Point, 0, len(points))
+	for _, p := range points {
+		if pathHasName(p.Payload, name) {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+func takePoints(points []qdrant.Point, limit int) []qdrant.Point {
+	if limit < len(points) {
+		return points[:limit]
+	}
+	return points
 }
 
 func deref(s *string) string {

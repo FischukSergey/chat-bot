@@ -41,6 +41,8 @@ task ingest -- load "data/incoming/БДР для индексации.xlsx"
 
 MCP: `task mcp` — HTTP `:7345` (`/health`, `POST /tools/{name}`).
 stdio: `task mcp -- --stdio`.
+Ассистент: `task assistant` (CLI), `task assistant -- serve` — HTTP `:7346`
+(`/health`, `POST /chat`).
 
 Excel класть в `data/incoming/`. Маппинг колонок — `data/mappings/`
 ([как читать YAML](data/mappings/README.md)). Боевые `.xlsx` и `.env` в git не входят.
@@ -55,7 +57,9 @@ Excel класть в `data/incoming/`. Маппинг колонок — `data/
 | [docs/sprint-1-plan.md](docs/sprint-1-plan.md) | Спринт 1: каркас + маппинг Excel |
 | [docs/sprint-2-plan.md](docs/sprint-2-plan.md) | Спринт 2: ingest → Qdrant |
 | [docs/sprint-3-plan.md](docs/sprint-3-plan.md) | Спринт 3: MCP-сервер |
+| [docs/api-sprint-3.md](docs/api-sprint-3.md) | Контракт MCP tools |
 | [docs/sprint-4-plan.md](docs/sprint-4-plan.md) | Спринт 4: RAG-ассистент |
+| [docs/api-sprint-4.md](docs/api-sprint-4.md) | Контракт `POST /chat` |
 | [docs/sprint-5-plan.md](docs/sprint-5-plan.md) | Спринт 5: упаковка v1 |
 | [docs/sprint-6-plan.md](docs/sprint-6-plan.md) | Спринт 6: усиление после v1 |
 

@@ -151,6 +151,53 @@ func TestGroupByLevel(t *testing.T) {
 	}
 }
 
+func TestSummaryParentNameContains(t *testing.T) {
+	h := testHandler([]qdrant.Point{
+		{Payload: map[string]any{
+			"article_code": "production:5.1.1.1", "article_name": "газопроводы АО",
+			"article_level": 4.0, "l3_name": "аренда газопроводов, в т.ч.", "limit_amount": 100.0,
+		}},
+		{Payload: map[string]any{
+			"article_code": "production:5.1.2", "article_name": "аренда зданий и помещений",
+			"article_level": 3.0, "l2_name": "аренда", "limit_amount": 50.0,
+		}},
+	})
+	out, err := h.Call(context.Background(), BudgetSummary, []byte(`{"article_name":"аренда газопроводов","expense_kind":"production"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := out.(SummaryResult)
+	if res.Total.Limit == nil || *res.Total.Limit != 100 {
+		t.Fatalf("ждали сумму только ветки 5.1.1, получили %+v", res)
+	}
+	if len(res.Rows) != 1 || res.Rows[0].Code != "production:5.1.1.1" {
+		t.Fatalf("rows %+v", res.Rows)
+	}
+}
+
+func TestSearchArticleNameParent(t *testing.T) {
+	h := testHandler([]qdrant.Point{
+		{ID: "1", Payload: map[string]any{
+			"article_code": "production:5.1.1.1", "article_name": "газопроводы АО",
+			"l3_name": "аренда газопроводов, в т.ч.",
+		}},
+		{ID: "2", Payload: map[string]any{
+			"article_code": "production:1.8.2", "article_name": "электроэнергия",
+		}},
+	})
+	out, err := h.Call(context.Background(), SearchRecords, []byte(`{"filters":{"article_name":"аренда газопроводов"}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := out.(SearchResult)
+	if len(res.Hits) != 1 {
+		t.Fatalf("hits=%d %+v", len(res.Hits), res.Hits)
+	}
+	if res.Hits[0].Fields["article_code"] != "production:5.1.1.1" {
+		t.Fatalf("%+v", res.Hits[0].Fields)
+	}
+}
+
 func TestSearchFilterOnly(t *testing.T) {
 	h := testHandler([]qdrant.Point{{
 		ID:      "829dd902-2f8f-5b3e-943d-20c8f354e6cc",

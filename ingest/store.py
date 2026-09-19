@@ -20,12 +20,14 @@ from qdrant_client.models import (
 
 from ingest.models import BudgetItem
 from ingest.settings import Settings, load_settings
+from ingest.text import ancestor_names
 
 KEYWORD_INDEXES = (
     "article_code",
     "match_key",
     "expense_kind",
     "ancestor_codes",
+    "ancestor_names",
     "source_file",
     "sheet",
     "article_name_norm",
@@ -172,5 +174,6 @@ def collection_count(settings: Settings | None = None) -> int:
 def _payload(item: BudgetItem, text: str, indexed_at: str) -> dict[str, Any]:
     data = item.model_dump()
     data["text"] = text
+    data["ancestor_names"] = ancestor_names(item)
     data["indexed_at"] = indexed_at
     return data

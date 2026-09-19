@@ -227,8 +227,10 @@ text_template: |
   Тип: статья бюджета
   Вид расходов: {expense_kind}
   Код: {article_code}
+  Ветка: {path_text}
+  Родители: {ancestor_text}
   Статья: {article_name}
-  Путь: {l1_name} / {l2_name} / {l3_name} / {l4_name}
+  Путь: {l1_name} / {l2_name} / {l3_name} / {l4_name} / {l5_name}
   Год: {year}
   Лимит: {limit_amount} {amount_unit}
 

@@ -84,7 +84,7 @@ tasks:
       - "{{.PYTHON}} -m ingest {{.CLI_ARGS}}"
 
   assistant:
-    desc: "Заготовка assistant: task assistant"
+    desc: "assistant: chat | --ask \"вопрос\" | serve | eval"
     cmds:
       - "{{.PYTHON}} -m assistant {{.CLI_ARGS}}"
 
