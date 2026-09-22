@@ -1,0 +1,13 @@
+# Python: assistant serve и тот же образ для ingest (compose profile).
+FROM python:3.13-slim-bookworm
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+RUN pip3 install --no-cache-dir --upgrade pip
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+COPY ingest/ ingest/
+COPY assistant/ assistant/
+COPY data/mappings/ data/mappings/
+EXPOSE 7346
+CMD ["python3", "-m", "assistant", "serve"]
