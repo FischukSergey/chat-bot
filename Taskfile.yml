@@ -44,7 +44,7 @@ tasks:
   fmt:py:
     desc: Проверка синтаксиса Python-пакетов
     cmds:
-      - "{{.PYTHON}} -m compileall -q ingest assistant"
+      - "{{.PYTHON}} -m compileall -q ingest assistant telegram_bot"
 
   lint:
     desc: golangci-lint в Docker (тот же вызов, что CI)

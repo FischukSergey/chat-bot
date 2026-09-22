@@ -71,6 +71,7 @@ services:
       MCP_URL: http://mcp-server:7345
       LLM_URL: ${LLM_URL_DOCKER:-http://host.docker.internal:1234/v1}
       LLM_MODEL: ${LLM_MODEL}
+      LLM_API_KEY: ${LLM_API_KEY:-}
       ASSISTANT_HTTP_ADDR: 0.0.0.0:7346
       ASSISTANT_MAX_TOOL_ROUNDS: ${ASSISTANT_MAX_TOOL_ROUNDS:-2}
       ASSISTANT_MCP_TIMEOUT: ${ASSISTANT_MCP_TIMEOUT:-30}

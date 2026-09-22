@@ -2,23 +2,23 @@
 
 Источник: `docs/sprint-6-plan.md`.
 
-**Scope:** только бюджет. VPS + OpenRouter (чат) + Telegram long polling.
+**Scope:** только бюджет. VPS + DeepSeek API (чат) + Telegram long polling.
 HTTP-ingest, веб, CSV, сверка, договоры — не отмечаем и не делаем.
 
 ## 0) Ворота
 
 - [x] Sprint 4 закрыт на живом индексе.
 - [x] Sprint 5: запуск с нуля по README.
-- [x] Scope зафиксирован: OpenRouter + те же эмбеддинги + Telegram long polling.
+- [x] Scope зафиксирован: DeepSeek API + те же эмбеддинги + Telegram long polling.
 
-## 1) OpenRouter в клиенте
+## 1) Облачный чат (DeepSeek API)
 
-- [ ] `LLM_API_KEY` в настройки; Bearer на `/models` и `/chat/completions`.
-- [ ] Пустой ключ — поведение как сейчас (LM Studio без заголовка).
-- [ ] В облако не уходит `chat_template_kwargs`.
-- [ ] `LLM_URL` / `LLM_MODEL` — OpenRouter, модель с tool calling.
-- [ ] Эмбеддинги: те же `EMBEDDINGS_MODEL` и `VECTOR_SIZE`, без переиндексации «под облако».
-- [ ] Живые `code-1.8.2` и `refuse-9.9.9` через новый LLM.
+- [x] `LLM_API_KEY` в настройки; Bearer на `/models` и `/chat/completions`.
+- [x] Пустой ключ — поведение как сейчас (LM Studio без заголовка).
+- [x] В облако не уходит `chat_template_kwargs`.
+- [x] `LLM_URL` / `LLM_MODEL` — DeepSeek API, модель с tool calling.
+- [x] Эмбеддинги: те же `EMBEDDINGS_MODEL` и `VECTOR_SIZE`, без переиндексации «под облако».
+- [x] Живые `code-1.8.2` и `refuse-9.9.9` через новый LLM.
 
 ## 2) Telegram-бот
 
