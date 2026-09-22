@@ -33,6 +33,27 @@ class TelegramSettingsTest(unittest.TestCase):
             cfg = load_settings()
         self.assertEqual(cfg.assistant_url, "http://assistant:7346")
         self.assertEqual(cfg.chat_timeout, 200.0)
+        self.assertIsNone(cfg.allowed_chat_id)
+
+    def test_allowed_chat_id(self) -> None:
+        values = {"TELEGRAM_ALLOWED_CHAT_ID": " 12345 "}
+
+        def _get(key: str, default: str | None = None) -> str | None:
+            return values.get(key, default)
+
+        with patch("os.environ.get", side_effect=_get):
+            cfg = load_settings()
+        self.assertEqual(cfg.allowed_chat_id, 12345)
+
+    def test_allowed_chat_id_must_be_int(self) -> None:
+        values = {"TELEGRAM_ALLOWED_CHAT_ID": "abc"}
+
+        def _get(key: str, default: str | None = None) -> str | None:
+            return values.get(key, default)
+
+        with patch("os.environ.get", side_effect=_get):
+            with self.assertRaises(ValueError):
+                load_settings()
 
 
 if __name__ == "__main__":

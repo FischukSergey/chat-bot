@@ -41,6 +41,10 @@ def _float_env(name: str, default: float, *, minimum: float) -> float:
 class Settings:
     assistant_url: str
     chat_timeout: float
+    telegram_bot_token: str = ""
+    telegram_api_url: str = "https://api.telegram.org"
+    poll_timeout: float = 25
+    allowed_chat_id: int | None = None
 
 
 def load_settings() -> Settings:
@@ -48,4 +52,22 @@ def load_settings() -> Settings:
     timeout = _float_env("TELEGRAM_CHAT_TIMEOUT", 0, minimum=0)
     if timeout <= 0:
         timeout = _float_env("ASSISTANT_LLM_TIMEOUT", 180, minimum=1)
-    return Settings(assistant_url=url.rstrip("/"), chat_timeout=timeout)
+    api = (os.environ.get("TELEGRAM_API_URL") or "https://api.telegram.org").strip()
+    return Settings(
+        assistant_url=url.rstrip("/"),
+        chat_timeout=timeout,
+        telegram_bot_token=(os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip(),
+        telegram_api_url=api.rstrip("/"),
+        poll_timeout=_float_env("TELEGRAM_POLL_TIMEOUT", 25, minimum=1),
+        allowed_chat_id=_optional_int("TELEGRAM_ALLOWED_CHAT_ID"),
+    )
+
+
+def _optional_int(name: str) -> int | None:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} должен быть целым") from exc

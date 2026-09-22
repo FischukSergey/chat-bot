@@ -88,6 +88,11 @@ tasks:
     cmds:
       - "{{.PYTHON}} -m assistant {{.CLI_ARGS}}"
 
+  telegram:
+    desc: "telegram-bot: long polling getUpdates"
+    cmds:
+      - "{{.PYTHON}} -m telegram_bot {{.CLI_ARGS}}"
+
   mcp:
     desc: "mcp_server: task mcp | task mcp -- --stdio"
     dir: mcp_server

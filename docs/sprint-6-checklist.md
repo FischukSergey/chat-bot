@@ -22,10 +22,10 @@ HTTP-ingest, веб, CSV, сверка, договоры — не отмечае
 
 ## 2) Telegram-бот
 
-- [ ] Тонкий клиент к `POST /chat`, оркестратор не скопирован.
-- [ ] Long polling (`getUpdates`), не webhook.
-- [ ] Allowlist `TELEGRAM_ALLOWED_CHAT_ID`.
-- [ ] В ответе текст и sources (файл / лист / строка / код).
+- [x] Тонкий клиент к `POST /chat`, оркестратор не скопирован.
+- [x] Long polling (`getUpdates`), не webhook.
+- [x] Allowlist `TELEGRAM_ALLOWED_CHAT_ID`.
+- [x] В ответе текст и sources (файл / лист / строка / код).
 - [ ] Юнит-тесты на allowlist и разбор `question` (без живого Telegram).
 
 ## 3) Compose и VPS
