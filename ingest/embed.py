@@ -18,14 +18,14 @@ def embed_texts(
     texts: list[str],
     settings: Settings | None = None,
     *,
-    batch_size: int = 16,
+    batch_size: int = 8,
     retries: int = 3,
 ) -> list[list[float]]:
     if not texts:
         return []
     cfg = settings or load_settings()
     out: list[list[float]] = []
-    with httpx.Client(timeout=120.0) as client:
+    with httpx.Client(timeout=300.0) as client:
         for start in range(0, len(texts), batch_size):
             chunk = texts[start : start + batch_size]
             out.extend(_embed_batch(client, cfg, chunk, retries=retries))

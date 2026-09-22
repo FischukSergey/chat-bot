@@ -109,6 +109,11 @@ tasks:
     cmds:
       - "{{.COMPOSE}} run --rm ingest {{.CLI_ARGS}}"
 
+  local:telegram:
+    desc: Поднять telegram-bot (profile telegram, long polling)
+    cmds:
+      - "{{.COMPOSE}} --profile telegram up -d --wait telegram-bot"
+
   local:down:
     desc: Остановить стек, volume оставить
     cmds:
@@ -140,6 +145,6 @@ tasks:
       - "{{.COMPOSE}} logs -f"
 
   local:logs:service:
-    desc: "Логи сервиса: task local:logs:service -- qdrant|mcp-server|assistant"
+    desc: "Логи сервиса: task local:logs:service -- qdrant|mcp-server|assistant|telegram-bot"
     cmds:
       - "{{.COMPOSE}} logs -f {{.CLI_ARGS}}"

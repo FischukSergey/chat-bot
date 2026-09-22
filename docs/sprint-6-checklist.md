@@ -26,16 +26,16 @@ HTTP-ingest, веб, CSV, сверка, договоры — не отмечае
 - [x] Long polling (`getUpdates`), не webhook.
 - [x] Allowlist `TELEGRAM_ALLOWED_CHAT_ID`.
 - [x] В ответе текст и sources (файл / лист / строка / код).
-- [ ] Юнит-тесты на allowlist и разбор `question` (без живого Telegram).
+- [x] Юнит-тесты на allowlist и разбор `question` (без живого Telegram).
 
 ## 3) Compose и VPS
 
-- [ ] Сервис бота в compose (профиль или отдельный сервис).
-- [ ] На VPS не публиковать `:6333` / `:7345` / `:7346` наружу.
-- [ ] `.env.example`: OpenRouter, токен бота, allowlist, embeddings URL для VPS.
-- [ ] Выкат по README (SSH вручную, без `task prod:*`).
-- [ ] Ingest контрольной сметы на сервере, число точек стабильно.
-- [ ] Секреты не в git.
+- [x] Сервис бота в compose (профиль или отдельный сервис).
+- [x] На VPS не публиковать `:6333` / `:7345` / `:7346` наружу.
+- [x] `.env.example`: DeepSeek, токен бота, allowlist, embeddings URL для VPS.
+- [x] Выкат по README (SSH вручную, без `task prod:*`).
+- [x] Ingest контрольной сметы на сервере, число точек стабильно.
+- [x] Секреты не в git.
 
 ## 4) Регрессия и документация
 
