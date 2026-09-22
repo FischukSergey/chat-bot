@@ -96,16 +96,34 @@
 
 **Готово, когда:** с нуля: compose up → ingest файла → вопрос в CLI → корректный ответ.
 
-## Этап 6. Усиление (после v1)
+Закрыто 2026-09-19 (только бюджет): `task local:up` поднимает qdrant + mcp +
+assistant; ingest в контуре; README; репетиция с нуля — 172 точки и три
+вопроса золотого набора сходятся с Excel. Протокол
+[`sprint-5-rehearsal.md`](sprint-5-rehearsal.md), лимиты
+[`known-limitations-sprint-5.md`](known-limitations-sprint-5.md).
 
-Не начинать, пока этап 4 не зелёный на реальных данных.
+## Этап 6. Стенд на VPS и Telegram
 
-- HTTP-загрузка Excel оператором (сейчас достаточно CLI).
-- Веб-чат или Telegram как клиент к `POST /chat`.
-- CSV и второй формат реестра.
-- Более умные агрегаты (топ контрагентов, сверка реестра обязательств со статьёй).
-- PostgreSQL — только если понадобятся сложные JOIN и история изменений.
-- Роли и аудит запросов, если сервис выйдет за пределы узкой группы.
+Этапы 4 и 5 закрыты. Локальный v1 от этого этапа не зависит.
+
+- Чат LLM — OpenRouter (DeepSeek / Flash), ключ в клиенте.
+- Эмбеддинги — та же модель и `VECTOR_SIZE`, что индекс (не облачная «другая»).
+- Telegram: long polling, клиент к `POST /chat`, без webhook.
+- Compose на VPS; Qdrant / MCP / assistant снаружи не публиковать.
+
+**Готово, когда:** с разрешённого Telegram-чата ответ сходится с Excel;
+чужой чат индекс не читает; секреты не в git.
+
+После этапа 6 (не в этом спринте): HTTP-загрузка Excel, веб-виджет, CSV,
+сверка реестра, своя GPU, webhook/домен.
+
+## Этап 6b. Усиление (бэклог после стенда)
+
+- HTTP-загрузка Excel оператором.
+- Веб-чат как второй клиент к `POST /chat`.
+- CSV и сверка реестра обязательств со статьёй.
+- PostgreSQL — только если понадобятся сложные JOIN и история.
+- Роли и аудит, если сервис выйдет за узкую группу.
 
 ## Спринты
 
@@ -119,9 +137,9 @@
 | 3. MCP-сервер | 3 | [sprint-3-plan.md](sprint-3-plan.md) | [sprint-3-checklist.md](sprint-3-checklist.md) |
 | 4. RAG-ассистент | 4 | [sprint-4-plan.md](sprint-4-plan.md) | [sprint-4-checklist.md](sprint-4-checklist.md) |
 | 5. Упаковка v1 | 5 | [sprint-5-plan.md](sprint-5-plan.md) | [sprint-5-checklist.md](sprint-5-checklist.md) |
-| 6. Усиление (после v1) | 6 | [sprint-6-plan.md](sprint-6-plan.md) | [sprint-6-checklist.md](sprint-6-checklist.md) |
+| 6. VPS + Telegram | 6 | [sprint-6-plan.md](sprint-6-plan.md) | [sprint-6-checklist.md](sprint-6-checklist.md) |
 
-Sprint 6 не стартует, пока не закрыты 4 и 5.
+Спринты 4 и 5 закрыты. Sprint 6 — первый стенд на VPS, не блокер локального v1.
 
 ## Порядок работ по неделям (ориентир)
 
@@ -132,6 +150,7 @@ Sprint 6 не стартует, пока не закрыты 4 и 5.
 | 3 | 3 | MCP tools, проверка цифр руками |
 | 4 | 4 | Ассистент, золотой набор, правки промпта и фильтров |
 | 5 | 5 | Compose, README, репетиция с нуля |
+| 6 | 6 | OpenRouter, Telegram long polling, выкат на VPS |
 
 Сдвиг допустим: узкое место почти всегда маппинг кривых Excel, не выбор фреймворка.
 

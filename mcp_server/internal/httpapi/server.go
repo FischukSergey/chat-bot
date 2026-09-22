@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/FischukSergey/chat-bot/mcp_server/internal/config"
@@ -68,12 +69,15 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		code = http.StatusServiceUnavailable
 	} else {
 		n, err := s.qd.Count(ctx, s.cfg.Collection, nil)
-		if err != nil {
+		if err != nil && !isMissingCollection(err) {
 			body.Status = "error"
 			body.Qdrant = "error"
 			body.Error = err.Error()
 			code = http.StatusServiceUnavailable
 		} else {
+			if err != nil {
+				n = 0
+			}
 			body.Points = &n
 		}
 	}
@@ -113,6 +117,14 @@ func (s *Server) handleTool(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(out)
+}
+
+func isMissingCollection(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "HTTP 404") || strings.Contains(strings.ToLower(msg), "not found")
 }
 
 func writeToolError(w http.ResponseWriter, code int, kind, msg string) {

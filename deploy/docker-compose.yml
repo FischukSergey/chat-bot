@@ -1,5 +1,16 @@
 name: chat-bot
 
+# Запускать из корня репозитория: task local:up
+# (подхватывает корневой .env). LM Studio остаётся на хосте.
+# Порты 7345/7346 не должны быть заняты хостовыми task mcp / assistant.
+# Логи: task local:logs | task local:logs:service -- mcp-server
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   qdrant:
     image: qdrant/qdrant:v1.15.1
@@ -9,12 +20,104 @@ services:
       - "6334:6334"
     volumes:
       - qdrant-data:/qdrant/storage
+    logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333'"]
       interval: 5s
       timeout: 3s
       retries: 10
       start_period: 5s
+
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.mcp
+    image: chat-bot-mcp:local
+    container_name: chat-bot-mcp
+    ports:
+      - "7345:7345"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION_BUDGET: ${QDRANT_COLLECTION_BUDGET:-budget_items}
+      EMBEDDINGS_URL: ${EMBEDDINGS_URL_DOCKER:-http://host.docker.internal:1234/v1}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL}
+      VECTOR_SIZE: ${VECTOR_SIZE}
+      MCP_HTTP_ADDR: 0.0.0.0:7345
+      SEARCH_SCORE_THRESHOLD: ${SEARCH_SCORE_THRESHOLD:-0.4}
+    logging: *default-logging
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7345/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  assistant:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.assistant
+    image: chat-bot-assistant:local
+    container_name: chat-bot-assistant
+    ports:
+      - "7346:7346"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MCP_URL: http://mcp-server:7345
+      LLM_URL: ${LLM_URL_DOCKER:-http://host.docker.internal:1234/v1}
+      LLM_MODEL: ${LLM_MODEL}
+      ASSISTANT_HTTP_ADDR: 0.0.0.0:7346
+      ASSISTANT_MAX_TOOL_ROUNDS: ${ASSISTANT_MAX_TOOL_ROUNDS:-2}
+      ASSISTANT_MCP_TIMEOUT: ${ASSISTANT_MCP_TIMEOUT:-30}
+      ASSISTANT_LLM_TIMEOUT: ${ASSISTANT_LLM_TIMEOUT:-180}
+      ASSISTANT_MAX_TOKENS: ${ASSISTANT_MAX_TOKENS:-2048}
+      LLM_DISABLE_THINKING: ${LLM_DISABLE_THINKING:-true}
+    logging: *default-logging
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7346/health')",
+        ]
+      interval: 10s
+      timeout: 8s
+      retries: 6
+      start_period: 20s
+
+  ingest:
+    profiles: [ingest]
+    image: chat-bot-assistant:local
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.assistant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION_BUDGET: ${QDRANT_COLLECTION_BUDGET:-budget_items}
+      EMBEDDINGS_URL: ${EMBEDDINGS_URL_DOCKER:-http://host.docker.internal:1234/v1}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL}
+      VECTOR_SIZE: ${VECTOR_SIZE}
+    volumes:
+      - ../data/incoming:/app/data/incoming:ro
+      - ../data/rejects:/app/data/rejects
+    working_dir: /app
+    entrypoint: ["python3", "-m", "ingest"]
+    command: ["load", "data/incoming/БДР для индексации.xlsx"]
+    logging: *default-logging
+    depends_on:
+      qdrant:
+        condition: service_healthy
 
 volumes:
   qdrant-data:

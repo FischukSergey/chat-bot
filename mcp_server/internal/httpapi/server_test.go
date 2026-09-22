@@ -56,6 +56,39 @@ func TestHealthOK(t *testing.T) {
 	}
 }
 
+func TestHealthMissingCollectionOK(t *testing.T) {
+	qdMux := http.NewServeMux()
+	qdMux.HandleFunc("GET /readyz", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ok"))
+	})
+	qdMux.HandleFunc("POST /collections/budget_items/points/count", func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, `{"status":{"error":"Not found"}}`, http.StatusNotFound)
+	})
+	qd := httptest.NewServer(qdMux)
+	t.Cleanup(qd.Close)
+	embSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"data":[]}`))
+	}))
+	t.Cleanup(embSrv.Close)
+	cfg := config.Config{
+		QdrantURL: qd.URL, Collection: "budget_items",
+		EmbeddingsURL: embSrv.URL, EmbeddingsModel: "m", VectorSize: 1024,
+	}
+	s := New(cfg, qdrant.New(cfg.QdrantURL), embed.New(cfg))
+	rec := httptest.NewRecorder()
+	s.Handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/health", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("code %d body %s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["points"] != float64(0) {
+		t.Fatalf("points %v", body["points"])
+	}
+}
+
 func TestToolValidationNotEmptyHits(t *testing.T) {
 	qdMux := http.NewServeMux()
 	qdMux.HandleFunc("GET /readyz", func(w http.ResponseWriter, _ *http.Request) {

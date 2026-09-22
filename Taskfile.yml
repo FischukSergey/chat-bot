@@ -12,7 +12,7 @@ vars:
   GOLANGCI_LINT_VERSION: v2.12.2
   GOLANGCI_LINT_CACHE:
     sh: echo "$HOME/Library/Caches/golangci-lint"
-  COMPOSE: "{{.DOCKER_COMPOSE_CMD}} -p {{.COMPOSE_PROJECT_NAME}} -f {{.LOCAL_COMPOSE_FILE}}"
+  COMPOSE: "{{.DOCKER_COMPOSE_CMD}} -p {{.COMPOSE_PROJECT_NAME}} -f {{.LOCAL_COMPOSE_FILE}} --env-file .env"
 
 tasks:
   default:
@@ -95,9 +95,14 @@ tasks:
       - go run . {{.CLI_ARGS}}
 
   local:up:
-    desc: Поднять локальный стек (Qdrant) и дождаться healthy
+    desc: Поднять контур v1 (qdrant + mcp + assistant) и дождаться healthy
     cmds:
       - "{{.COMPOSE}} up -d --wait"
+
+  local:ingest:
+    desc: "ingest в контуре: task local:ingest [-- load FILE]"
+    cmds:
+      - "{{.COMPOSE}} run --rm ingest {{.CLI_ARGS}}"
 
   local:down:
     desc: Остановить стек, volume оставить
@@ -125,11 +130,11 @@ tasks:
       - "{{.COMPOSE}} ps"
 
   local:logs:
-    desc: Логи всего стека
+    desc: Логи всего стека (json-file, ротация 10m×3)
     cmds:
       - "{{.COMPOSE}} logs -f"
 
   local:logs:service:
-    desc: "Логи сервиса: task local:logs:service -- qdrant"
+    desc: "Логи сервиса: task local:logs:service -- qdrant|mcp-server|assistant"
     cmds:
       - "{{.COMPOSE}} logs -f {{.CLI_ARGS}}"
