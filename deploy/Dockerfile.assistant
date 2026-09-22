@@ -8,6 +8,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 COPY ingest/ ingest/
 COPY assistant/ assistant/
+COPY telegram_bot/ telegram_bot/
 COPY data/mappings/ data/mappings/
 EXPOSE 7346
 CMD ["python3", "-m", "assistant", "serve"]

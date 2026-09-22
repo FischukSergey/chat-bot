@@ -44,7 +44,7 @@ tasks:
   fmt:py:
     desc: Проверка синтаксиса Python-пакетов
     cmds:
-      - "{{.PYTHON}} -m compileall -q ingest assistant"
+      - "{{.PYTHON}} -m compileall -q ingest assistant telegram_bot"
 
   lint:
     desc: golangci-lint в Docker (тот же вызов, что CI)
@@ -88,6 +88,11 @@ tasks:
     cmds:
       - "{{.PYTHON}} -m assistant {{.CLI_ARGS}}"
 
+  telegram:
+    desc: "telegram-bot: long polling getUpdates"
+    cmds:
+      - "{{.PYTHON}} -m telegram_bot {{.CLI_ARGS}}"
+
   mcp:
     desc: "mcp_server: task mcp | task mcp -- --stdio"
     dir: mcp_server
@@ -103,6 +108,11 @@ tasks:
     desc: "ingest в контуре: task local:ingest [-- load FILE]"
     cmds:
       - "{{.COMPOSE}} run --rm ingest {{.CLI_ARGS}}"
+
+  local:telegram:
+    desc: Поднять telegram-bot (profile telegram, long polling)
+    cmds:
+      - "{{.COMPOSE}} --profile telegram up -d --wait telegram-bot"
 
   local:down:
     desc: Остановить стек, volume оставить
@@ -135,6 +145,6 @@ tasks:
       - "{{.COMPOSE}} logs -f"
 
   local:logs:service:
-    desc: "Логи сервиса: task local:logs:service -- qdrant|mcp-server|assistant"
+    desc: "Логи сервиса: task local:logs:service -- qdrant|mcp-server|assistant|telegram-bot"
     cmds:
       - "{{.COMPOSE}} logs -f {{.CLI_ARGS}}"

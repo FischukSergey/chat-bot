@@ -4,8 +4,11 @@ v1 отвечает **только по смете** (`budget_items`). Дого�
 в индексе нет — на такой вопрос будет отказ.
 
 Данные — Excel. Контур: ingest → Qdrant → MCP → ассистент (RAG).
-Стек: **Python** (ingest, оркестратор), **Go** (MCP), **Qdrant**.
-LLM и эмбеддинги — **LM Studio на хосте**, не в Docker.
+Стек: **Python** (ingest, оркестратор, Telegram-бот), **Go** (MCP), **Qdrant**.
+Чат LLM — **DeepSeek API** (`LLM_URL` / `LLM_API_KEY`). Эмбеддинги — **не
+DeepSeek и не другой облачный endpoint**: та же локальная модель, что построила
+индекс (`EMBEDDINGS_MODEL`, `VECTOR_SIZE`, LM Studio или совместимый
+`/v1/embeddings`). Смена модели эмбеддингов = переиндексация.
 
 Запуск — через [Taskfile](https://taskfile.dev). Не вызывать сырой
 `docker compose`, если есть `task local:*`.
@@ -24,8 +27,10 @@ task                   # fmt + lint + test + build
 ## Требования
 
 - Docker и [Task](https://taskfile.dev)
-- LM Studio: сервер `http://127.0.0.1:1234/v1`, **две** модели
-  (чат + отдельная embedding)
+- Для чата: ключ DeepSeek (`LLM_API_KEY`). Локально чат может остаться в LM Studio
+  (пустой ключ, `LLM_URL=http://127.0.0.1:1234/v1`)
+- Эмбеддинги отдельно от чата: LM Studio или sidecar `/v1/embeddings`,
+  модель и `VECTOR_SIZE` как в индексе (ориентир v1: Qwen3-Embedding-0.6B, 1024)
 - Excel сметы в `data/incoming/` (боевые `.xlsx` и `.env` в git не входят)
 
 ## LM Studio с хоста
@@ -54,9 +59,8 @@ curl -sf http://127.0.0.1:7346/health
 # Qdrant UI: http://127.0.0.1:6333/dashboard
 ```
 
-Порты: Qdrant `6333`, MCP `7345`, ассистент `7346`.
-Не держать одновременно хостовые `task mcp` / `task assistant` —
-те же порты.
+Порты на хосте только `127.0.0.1`: Qdrant `6333`, MCP `7345`, ассистент `7346`.
+С интернета их нет. Не держать одновременно хостовые `task mcp` / `task assistant`.
 
 Логи (json-file, ротация 10m×3):
 
@@ -122,11 +126,72 @@ task assistant                 # цикл, /quit — выход
 
 Хостовый `task assistant -- serve` не нужен, если уже `task local:up`.
 
+Telegram (long polling, без webhook). Сначала allowlist, потом один процесс.
+`TELEGRAM_ALLOWED_CHAT_ID` — целое число **без кавычек**.
+
+```bash
+# в .env: TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_CHAT_ID
+task local:telegram              # в контуре, profile telegram
+# или с хоста (не вместе с local:telegram):
+task telegram
+```
+
+Два `getUpdates` сразу (локальный бот + VPS) нельзя.
+
 Опционально MCP в Cursor / LM Studio (не замена `POST /chat`):
 
 ```bash
 task mcp -- --stdio
 ```
+
+## Стенд на VPS
+
+Те же команды, что локально. **Не добавлять `task prod:*`.** SSH вручную.
+На проде **не** вызывать `task local:down:clean` — сотрёт индекс.
+
+Нужны: Docker, [Task](https://taskfile.dev), Git, сервер эмбеддингов той же
+модели (`EMBEDDINGS_MODEL`, `VECTOR_SIZE`). GPU для чата не нужна.
+Если эмбеддинги на той же машине — ориентир **2 vCPU / 4 GiB**, не 1/2.
+Firewall: SSH (и больше ничего для бота). `:6333` / `:7345` / `:7346` снаружи
+не открывать.
+
+Чат на VPS идёт в DeepSeek. Эмбеддинги — sidecar на хосте, не `api.deepseek.com`.
+Контейнеры ходят в `EMBEDDINGS_URL_DOCKER` (`host.docker.internal`). Слушать
+нужно и `127.0.0.1:1234`, и адрес docker0 (`172.17.0.1:1234`): иначе MCP
+получит connection refused. Для llama.cpp на 4 ГиБ не ставить большой
+контекст (`-c 2048` съедает ~3 ГиБ); для сметы хватает `-c 512 --parallel 1`.
+
+1. Завести бота у [@BotFather](https://t.me/BotFather), узнать свой `chat_id`
+   ([@userinfobot](https://t.me/userinfobot) или `getUpdates`).
+2. На сервере поднять эмбеддинги той же модели, что локальный индекс
+   (LM Studio / sidecar / уже существующий `/v1/embeddings`). Проверить:
+   `POST /v1/embeddings` → длина вектора = `VECTOR_SIZE`.
+3. Скопировать репозиторий (или `git pull`), положить Excel в `data/incoming/`.
+4. `cp .env.example .env` и заполнить секреты **на сервере**, не коммитить:
+
+   - `LLM_API_KEY`, `LLM_URL=https://api.deepseek.com`, `LLM_MODEL=deepseek-flash`
+   - `LLM_URL_DOCKER=https://api.deepseek.com`
+   - `EMBEDDINGS_MODEL`, `VECTOR_SIZE` — как локально
+   - `EMBEDDINGS_URL_DOCKER` — URL, который видят контейнеры
+     (`http://host.docker.internal:1234/v1`, если сервер на том же хосте)
+   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_ID` (число без кавычек)
+
+5. Поднять контур и индекс:
+
+```bash
+ssh user@vps
+cd /path/to/chat-bot
+git pull
+# .env уже заполнен
+task local:up
+task local:ingest
+task local:telegram
+curl -sf http://127.0.0.1:7345/health
+curl -sf http://127.0.0.1:7346/health
+# с другой машины :7346 не должен открываться
+```
+
+Локальный `task telegram` на время стенда выключить — иначе два polling.
 
 ## Документы
 
@@ -140,5 +205,6 @@ task mcp -- --stdio
 | [docs/sprint-5-plan.md](docs/sprint-5-plan.md) | Спринт 5: упаковка v1 |
 | [docs/sprint-5-rehearsal.md](docs/sprint-5-rehearsal.md) | Репетиция с нуля |
 | [docs/known-limitations-sprint-5.md](docs/known-limitations-sprint-5.md) | Лимиты v1 |
+| [docs/known-limitations-sprint-6.md](docs/known-limitations-sprint-6.md) | Стенд VPS: смета в облаке, Telegram, эмбеддинги |
 
 Чек-листы: `docs/sprint-N-checklist.md`.

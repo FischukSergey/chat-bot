@@ -51,8 +51,23 @@ class LLMClient:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
+    def _auth_headers(self) -> dict[str, str]:
+        key = self.settings.llm_api_key.strip()
+        if not key:
+            return {}
+        return {"Authorization": f"Bearer {key}"}
+
+    def _is_cloud_llm(self) -> bool:
+        if self.settings.llm_api_key.strip():
+            return True
+        host = self.settings.llm_url.lower()
+        return "openrouter.ai" in host or "api.deepseek.com" in host
+
+    def _is_deepseek_api(self) -> bool:
+        return "api.deepseek.com" in self.settings.llm_url.lower()
+
     def models(self) -> list[str]:
-        resp = self._client.get(f"{self.settings.llm_url}/models")
+        resp = self._client.get(f"{self.settings.llm_url}/models", headers=self._auth_headers())
         if resp.status_code >= 400:
             raise LLMError(f"models HTTP {resp.status_code}: {resp.text[:300]}")
         data = resp.json()
@@ -75,8 +90,15 @@ class LLMClient:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
         if self.settings.disable_thinking:
-            payload["chat_template_kwargs"] = {"enable_thinking": False}
-        resp = self._client.post(f"{self.settings.llm_url}/chat/completions", json=payload)
+            if self._is_deepseek_api():
+                payload["thinking"] = {"type": "disabled"}
+            elif not self._is_cloud_llm():
+                payload["chat_template_kwargs"] = {"enable_thinking": False}
+        resp = self._client.post(
+            f"{self.settings.llm_url}/chat/completions",
+            json=payload,
+            headers=self._auth_headers(),
+        )
         if resp.status_code >= 400:
             raise LLMError(f"chat HTTP {resp.status_code}: {resp.text[:400]}")
         try:

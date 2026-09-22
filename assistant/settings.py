@@ -54,6 +54,7 @@ class Settings:
     max_tokens: int
     disable_thinking: bool
     http_addr: str = "127.0.0.1:7346"
+    llm_api_key: str = ""
 
 
 def load_settings() -> Settings:
@@ -74,4 +75,5 @@ def load_settings() -> Settings:
         max_tokens=_int_env("ASSISTANT_MAX_TOKENS", 2048, minimum=16),
         disable_thinking=_truthy(os.environ.get("LLM_DISABLE_THINKING"), True),
         http_addr=(os.environ.get("ASSISTANT_HTTP_ADDR") or "127.0.0.1:7346").strip(),
+        llm_api_key=(os.environ.get("LLM_API_KEY") or "").strip(),
     )
