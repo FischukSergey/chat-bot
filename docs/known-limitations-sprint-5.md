@@ -1,7 +1,8 @@
 # Known limitations v1 / Sprint 5
 
-Scope: только `budget_items`. Telegram, HTTP-загрузка Excel, CSV, сверка
-реестра со статьёй — Sprint 6, не блокер релиза этого контура.
+Scope: только `budget_items`. Telegram и выкат на VPS — Sprint 6
+([known-limitations-sprint-6.md](known-limitations-sprint-6.md)).
+HTTP-загрузка Excel, CSV, сверка реестра — не в v1.
 
 ## Данные
 
