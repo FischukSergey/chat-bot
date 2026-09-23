@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+import time
 from typing import Any, Callable
 
 from telegram_bot.chat import AssistantClient, ChatError, ChatReply
@@ -112,7 +114,8 @@ def run_polling(
     while should_stop is None or not should_stop():
         try:
             offset = poll_once(telegram, assistant, offset)
-        except TelegramError:
+        except TelegramError as exc:
             if should_stop is not None and should_stop():
                 return
-            raise
+            print(f"telegram poll: {exc}", file=sys.stderr, flush=True)
+            time.sleep(1)

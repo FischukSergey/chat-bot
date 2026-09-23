@@ -22,7 +22,7 @@ class TelegramClient:
     ) -> None:
         self.settings = settings or load_settings()
         self._own_client = client is None
-        timeout = self.settings.poll_timeout + 10
+        timeout = self.settings.poll_timeout + 30
         self._client = client or httpx.Client(timeout=timeout)
 
     def close(self) -> None:
@@ -42,7 +42,10 @@ class TelegramClient:
         return f"{self.settings.telegram_api_url}/bot{token}/{method}"
 
     def _call(self, method: str, payload: dict[str, Any]) -> Any:
-        resp = self._client.post(self._url(method), json=payload)
+        try:
+            resp = self._client.post(self._url(method), json=payload)
+        except httpx.HTTPError as exc:
+            raise TelegramError(f"{method}: {exc}") from exc
         try:
             body: Any = resp.json()
         except ValueError as exc:

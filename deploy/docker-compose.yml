@@ -129,6 +129,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile.assistant
     container_name: chat-bot-telegram
+    restart: unless-stopped
     environment:
       ASSISTANT_URL: http://assistant:7346
       ASSISTANT_LLM_TIMEOUT: ${ASSISTANT_LLM_TIMEOUT:-180}

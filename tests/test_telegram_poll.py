@@ -228,6 +228,29 @@ class PollTest(unittest.TestCase):
         self.assertTrue(any(p.endswith("/getUpdates") for p in seen))
         self.assertFalse(any("setWebhook" in p for p in seen))
 
+    def test_run_polling_retries_get_updates_timeout(self) -> None:
+        seen: list[str] = []
+        n = {"i": 0}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(request.url.path)
+            if request.url.path.endswith("/deleteWebhook"):
+                return httpx.Response(200, json={"ok": True, "result": True})
+            if request.url.path.endswith("/getUpdates"):
+                n["i"] += 1
+                if n["i"] == 1:
+                    raise httpx.ReadTimeout("timed out")
+                return httpx.Response(200, json={"ok": True, "result": []})
+            self.fail(f"неожиданный путь {request.url.path}")
+            return httpx.Response(404)
+
+        http = httpx.Client(transport=httpx.MockTransport(handler))
+        telegram = TelegramClient(_settings(), client=http)
+        assistant = AssistantClient(_settings(), client=http)
+        run_polling(telegram, assistant, should_stop=lambda: n["i"] >= 2)
+        self.assertGreaterEqual(n["i"], 2)
+        self.assertTrue(any(p.endswith("/getUpdates") for p in seen))
+
 
 if __name__ == "__main__":
     unittest.main()
